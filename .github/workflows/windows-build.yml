@@ -26,6 +26,7 @@ jobs:
         run: |
           choco install boost-msvc-14.2 --version 1.74.0 -y --no-progress
           if (!(Test-Path C:\local\boost_1_74_0\lib64-msvc-14.2)) { throw "Boost no quedo instalado" }
+          Get-ChildItem C:\local\boost_1_74_0\lib64-msvc-14.2\cmake | Select-Object -First 5 Name
 
       - name: Descargar MySQL 8.0.30 (libreria cliente)
         shell: pwsh
@@ -49,6 +50,8 @@ jobs:
           -DOPENSSL_ROOT_DIR="C:/Program Files/OpenSSL"
           -DBOOST_ROOT="C:/local/boost_1_74_0"
           -DBOOST_LIBRARYDIR="C:/local/boost_1_74_0/lib64-msvc-14.2"
+          -DBoost_DIR="C:/local/boost_1_74_0/lib64-msvc-14.2/cmake/Boost-1.74.0"
+          -DCMAKE_POLICY_VERSION_MINIMUM="3.5"
           -DMYSQL_LIBRARY="C:/mysqlzip/mysql-8.0.30-winx64/lib/libmysql.lib"
           -DMYSQL_INCLUDE_DIR="C:/mysqlzip/mysql-8.0.30-winx64/include"
           -DSCRIPTS=1 -DTOOLS=0
