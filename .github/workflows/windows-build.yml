@@ -70,6 +70,7 @@ jobs:
           Copy-Item "$dir\*.exe","$dir\*.dll","$dir\*.dist" $out -ErrorAction SilentlyContinue
           Get-ChildItem "C:\Program Files\OpenSSL" -Recurse -Include libcrypto*.dll,libssl*.dll,legacy.dll | Copy-Item -Destination $out
           Copy-Item C:\mysqlzip\mysql-8.0.30-winx64\lib\libmysql.dll $out
+          Copy-Item C:\mysqlzip\mysql-8.0.30-winx64\bin\libcrypto-1_1-x64.dll,C:\mysqlzip\mysql-8.0.30-winx64\bin\libssl-1_1-x64.dll $out
           git rev-parse --short HEAD | Out-File "$out\version.txt"
           Get-ChildItem $out
 
