@@ -333,6 +333,18 @@ namespace Atributos
         }
     }
 
+    // Linea de datos para el addon. Formato (separado por #):
+    // ATRIB#1#nivel#libres#total#gastado0#aplicado0#valor0#...#gastado8#aplicado8#valor8
+    static void EnviarDatosAddon(Player* player)
+    {
+        Datos& d = Obtener(player);
+        uint32 nivel = player->GetLevel();
+        std::string linea = Formato("ATRIB#1#%u#%u#%u", nivel, PuntosLibres(player, d), PuntosTotales(nivel));
+        for (uint8 i = 0; i < TOTAL_STATS; ++i)
+            linea += Formato("#%u#%d#%d", d.gastado[i], d.aplicado[i], ValorPorPunto(Stat(i), nivel));
+        Mensaje(player, linea);
+    }
+
     // ------------------------------------------------------------------
     // Gossip
     // ------------------------------------------------------------------
@@ -520,7 +532,7 @@ public:
 
         uint32 libres = PuntosLibres(player, d);
         if (libres)
-            Mensaje(player, Formato("|cff00ccff[Atributos]|r Tienes |cff00ff00%u|r puntos de atributo libres. Escribe |cffffff00.atributos|r para convocar al Maestro.", libres));
+            Mensaje(player, Formato("|cff00ccff[Atributos]|r Tienes |cff00ff00%u|r puntos de atributo libres. Usa el boton del minimapa o |cffffff00.atributos|r.", libres));
     }
 
     void OnLogout(Player* player) override
@@ -540,8 +552,9 @@ public:
         if (nuevo > oldLevel)
         {
             uint32 ganados = PuntosTotales(nuevo) - PuntosTotales(oldLevel);
-            Mensaje(player, Formato("|cff00ccff[Atributos]|r Subiste a nivel %u: +%u puntos. Libres: |cff00ff00%u|r. Escribe |cffffff00.atributos|r.",
+            Mensaje(player, Formato("|cff00ccff[Atributos]|r Subiste a nivel %u: +%u puntos. Libres: |cff00ff00%u|r. Usa el boton del minimapa o |cffffff00.atributos|r.",
                 nuevo, ganados, PuntosLibres(player, d)));
+            EnviarDatosAddon(player);
         }
         else if (PuntosGastados(d) > PuntosTotales(nuevo))
         {
@@ -603,9 +616,36 @@ public:
         }
 
         std::string arg = args ? args : "";
+        while (!arg.empty() && arg.back() == ' ') arg.pop_back();
+
         if (arg == "resumen")
         {
             MostrarResumen(player, Obtener(player));
+            return true;
+        }
+
+        // ---- Ordenes que usa el addon del minimapa (PuntosAtributo) ----
+        if (arg == "datos")
+        {
+            EnviarDatosAddon(player);
+            return true;
+        }
+        if (arg == "reiniciar")
+        {
+            Reiniciar(player);
+            EnviarDatosAddon(player);
+            return true;
+        }
+        if (arg.compare(0, 8, "asignar ") == 0)
+        {
+            unsigned int stat = 0, cantidad = 0;
+            if (sscanf(arg.c_str() + 8, "%u %u", &stat, &cantidad) == 2 && stat < TOTAL_STATS && cantidad > 0)
+            {
+                Datos& d = Obtener(player);
+                uint32 libres = PuntosLibres(player, d);
+                Asignar(player, Stat(stat), cantidad == 9999 ? libres : cantidad);
+            }
+            EnviarDatosAddon(player);
             return true;
         }
 
