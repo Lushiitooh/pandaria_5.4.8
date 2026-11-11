@@ -2145,6 +2145,7 @@ void AddSC_custom_reward();
 void AddSC_battle_pay_items();
 void AddSC_solocraft_system();
 void AddSC_sistema_atributos();
+void AddSC_extras_servidor();
 
 void AddCustomScripts()
 {
@@ -2155,6 +2156,7 @@ AddSC_custom_reward();
 AddSC_battle_pay_items();
 AddSC_solocraft_system();
 AddSC_sistema_atributos();
+AddSC_extras_servidor();
 
 #endif
     AddSC_Anticheat();

@@ -165,7 +165,7 @@ namespace Atributos
 
     static uint32 PuntosLibres(Player* player, Datos const& d)
     {
-        uint32 total = PuntosTotales(player->getLevel());
+        uint32 total = PuntosTotales(player->GetLevel());
         uint32 usados = PuntosGastados(d);
         return total > usados ? total - usados : 0;
     }
@@ -219,7 +219,7 @@ namespace Atributos
         if (!sCfg.activo)
             return;
 
-        uint32 nivel = player->getLevel();
+        uint32 nivel = player->GetLevel();
         for (uint8 i = 0; i < TOTAL_STATS; ++i)
         {
             int32 cantidad = int32(d.gastado[i]) * ValorPorPunto(Stat(i), nivel);
@@ -322,7 +322,7 @@ namespace Atributos
 
     static void MostrarResumen(Player* player, Datos const& d)
     {
-        uint32 nivel = player->getLevel();
+        uint32 nivel = player->GetLevel();
         Mensaje(player, Formato("|cff00ccff[Atributos]|r Nivel %u: %u puntos en total, %u libres.",
             nivel, PuntosTotales(nivel), PuntosLibres(player, d)));
         for (uint8 i = 0; i < TOTAL_STATS; ++i)
@@ -339,7 +339,7 @@ namespace Atributos
     static void MenuPrincipal(Player* player, Creature* creature)
     {
         Datos& d = Obtener(player);
-        uint32 nivel = player->getLevel();
+        uint32 nivel = player->GetLevel();
         ClearGossipMenuFor(player);
 
         AddGossipItemFor(player, GOSSIP_ICON_DOT,
@@ -365,7 +365,7 @@ namespace Atributos
     {
         Datos& d = Obtener(player);
         uint32 libres = PuntosLibres(player, d);
-        int32 valor = ValorPorPunto(s, player->getLevel());
+        int32 valor = ValorPorPunto(s, player->GetLevel());
         ClearGossipMenuFor(player);
 
         AddGossipItemFor(player, GOSSIP_ICON_DOT,
@@ -394,7 +394,7 @@ namespace Atributos
         }
 
         float antes = ValorVisible(player, s);
-        int32 esperado = int32(cantidad) * ValorPorPunto(s, player->getLevel());
+        int32 esperado = int32(cantidad) * ValorPorPunto(s, player->GetLevel());
 
         d.gastado[s] += cantidad;
         AplicarTodo(player, d);
@@ -536,7 +536,7 @@ public:
         Datos& d = Obtener(player);
         AplicarTodo(player, d);   // el valor de cada punto cambia con el nivel
 
-        uint32 nuevo = player->getLevel();
+        uint32 nuevo = player->GetLevel();
         if (nuevo > oldLevel)
         {
             uint32 ganados = PuntosTotales(nuevo) - PuntosTotales(oldLevel);
@@ -617,7 +617,7 @@ public:
 
         float x, y, z;
         player->GetClosePoint(x, y, z, player->GetObjectSize(), 2.0f);
-        if (TempSummon* maestro = player->SummonCreature(NPC_MAESTRO, x, y, z, player->GetOrientation() + float(M_PI),
+        if (TempSummon* maestro = player->SummonCreature(NPC_MAESTRO, x, y, z, player->GetOrientation() + 3.14159f,
             TEMPSUMMON_TIMED_DESPAWN, DURACION_CONVOCADO, true))
         {
             maestro->SetFacingToObject(player);
