@@ -1,0 +1,8 @@
+## Interface: 50400
+## Title: Puntos de Atributo
+## Notes: Boton en el minimapa para repartir tus puntos de atributo (servidor de Luis).
+## Author: Claude
+## Version: 1.0
+## SavedVariablesPerCharacter: PuntosAtributoDB
+
+PuntosAtributo.lua
