@@ -1,0 +1,10 @@
+## Interface: 50400
+## Title: Guia de Niveles (Servidor de Luis)
+## Notes: Ruta de zonas del 1 al 90 segun tu faccion, con flecha (TomTom) hacia la siguiente zona.
+## Author: Claude
+## Version: 1.0
+## OptionalDeps: TomTom
+## SavedVariablesPerCharacter: GuiaNivelesDB
+
+Datos.lua
+GuiaNiveles.lua

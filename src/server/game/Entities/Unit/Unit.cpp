@@ -9727,6 +9727,35 @@ void Unit::EnergizeBySpell(Unit* victim, uint32 spellId, int32 damage, Powers po
     victim->getHostileRefManager().threatAssist(this, float(damage) * 0.5f, spellInfo);
 }
 
+// [Personalizado] Sistema de cartas: bono de dano/sanacion del jugador (o del dueno de la mascota).
+static Unit const* FuenteCartas(Unit const* u)
+{
+    if (u->GetTypeId() == TYPEID_PLAYER)
+        return u;
+    if (Unit* owner = u->GetCharmerOrOwner())
+        if (owner->GetTypeId() == TYPEID_PLAYER)
+            return owner;
+    return nullptr;
+}
+
+float Unit::GetCartaDanoMod(uint32 schoolMask) const
+{
+    Unit const* f = FuenteCartas(this);
+    if (!f)
+        return 1.0f;
+    float mejor = 0.0f;
+    for (uint32 i = 0; i < MAX_SPELL_SCHOOL; ++i)
+        if ((schoolMask & (1 << i)) && f->m_cartaDanoPct[i] > mejor)
+            mejor = f->m_cartaDanoPct[i];
+    return 1.0f + mejor / 100.0f;
+}
+
+float Unit::GetCartaSanacionMod() const
+{
+    Unit const* f = FuenteCartas(this);
+    return f ? 1.0f + f->m_cartaSanacionPct / 100.0f : 1.0f;
+}
+
 int32 Unit::SpellDamageBonusDone(Unit* victim, SpellInfo const* spellProto, uint32 effIndex, int32 damage, DamageEffectType damagetype, uint32 stack) const
 {
     if (!spellProto || !victim || damagetype == DIRECT_DAMAGE)
@@ -9976,6 +10005,7 @@ int32 Unit::SpellDamageBonusDone(Unit* victim, SpellInfo const* spellProto, uint
         doneTotal += int32(DoneAdvertisedBenefit * coeff * stack);
     }
 
+    doneTotalMod *= GetCartaDanoMod(spellProto->GetSchoolMask());
     float tmpDamage = (damage + doneTotal) * doneTotalMod;
     // apply spellmod to Done damage (flat and pct)
     if (Player* modOwner = GetSpellModOwner())
@@ -10659,7 +10689,7 @@ uint32 Unit::SpellHealingBonusDone(Unit* victim, SpellInfo const* spellProto, ui
         if (spellProto->DmgClass == SPELL_DAMAGE_CLASS_NONE
             && spellProto->Effects[effIndex].BonusMultiplier == 0.0f)
         {
-            return uint32(std::max(healamount * doneTotalMod, 0.0f));
+            return uint32(std::max(healamount * doneTotalMod * GetCartaSanacionMod(), 0.0f));
         }
     }
 
@@ -10699,6 +10729,7 @@ uint32 Unit::SpellHealingBonusDone(Unit* victim, SpellInfo const* spellProto, ui
     }
 
     // use float as more appropriate for negative values and percent applying
+    doneTotalMod *= GetCartaSanacionMod();
     float heal = float(int32(healamount) + doneTotal) * doneTotalMod;
     // apply spellmod to Done amount
     if (Player* modOwner = GetSpellModOwner())
@@ -11236,6 +11267,7 @@ uint32 Unit::MeleeDamageBonusDone(Unit* victim, uint32 pdamage, WeaponAttackType
     // Unit* owner = GetOwner() ? GetOwner() : this;
     // AuraEffectList const& mOverrideClassScript = owner->GetAuraEffectsByType(SPELL_AURA_OVERRIDE_CLASS_SCRIPTS);
 
+    doneTotalMod *= GetCartaDanoMod(spellProto ? uint32(spellProto->GetSchoolMask()) : uint32(SPELL_SCHOOL_MASK_NORMAL));
     float tmpDamage = float(int32(pdamage) + doneFlatBenefit) * doneTotalMod;
 
     // apply spellmod to Done damage
@@ -15917,6 +15949,8 @@ void Unit::Kill(Unit* victim, bool durabilityLoss, SpellInfo const* spellInfo)
                 loot->FillLoot(creature, lootid, LootTemplates_Creature, looter, false, false, creature->GetMap()->GetDifficulty());
 
             loot->generateMoneyLoot(creature->GetCreatureTemplate()->mingold, creature->GetCreatureTemplate()->maxgold);
+
+            sScriptMgr->OnCreatureLootGenerated(player, creature);
         }
 
         player->RewardPlayerAndGroupAtKill(victim, false);

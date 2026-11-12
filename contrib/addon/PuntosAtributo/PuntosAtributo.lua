@@ -1,6 +1,8 @@
 -- Puntos de Atributo: boton en el minimapa + ventana para repartir puntos.
 -- Habla con el servidor mediante el comando ".atributos" (datos / asignar / reiniciar).
 
+local _, PA = ...
+
 local NOMBRES = { "Fuerza", "Agilidad", "Aguante", "Intelecto", "Espiritu", "Armadura", "Celeridad", "Critico", "Maestria" }
 local ICONOS = {
     "Interface\\Icons\\Spell_Nature_Strength",
@@ -27,21 +29,7 @@ local function Enviar(orden)
     SendChatMessage(cmd, "SAY")
 end
 
-local temporizador = CreateFrame("Frame")
-temporizador:Hide()
-local tRestante, tFuncion = 0, nil
-temporizador:SetScript("OnUpdate", function(self, transcurrido)
-    tRestante = tRestante - transcurrido
-    if tRestante <= 0 then
-        self:Hide()
-        if tFuncion then local f = tFuncion; tFuncion = nil; f() end
-    end
-end)
-local function Despues(segundos, funcion)
-    tRestante = segundos
-    tFuncion = funcion
-    temporizador:Show()
-end
+local Despues = PA.Despues
 
 local function Parsear(msg)
     local p = {}
@@ -192,6 +180,15 @@ local mbNumero = mb:CreateFontString(nil, "OVERLAY", "NumberFontNormal")
 mbNumero:SetPoint("BOTTOMRIGHT", mb, "BOTTOMRIGHT", 0, 2)
 mbNumero:SetTextColor(0.2, 1, 0.2)
 
+-- Cartas por elegir (numero dorado arriba)
+local mbCartas = mb:CreateFontString(nil, "OVERLAY", "NumberFontNormal")
+mbCartas:SetPoint("TOPRIGHT", mb, "TOPRIGHT", 2, -1)
+mbCartas:SetTextColor(1, 0.82, 0)
+function PA.MostrarCartasPendientes(n)
+    mbCartas:SetText((n and n > 0) and tostring(n) or "")
+    PA.cartasPendientes = n or 0
+end
+
 local function PosicionarBoton()
     local angulo = math.rad((PuntosAtributoDB and PuntosAtributoDB.angulo) or 200)
     mb:ClearAllPoints()
@@ -221,20 +218,26 @@ end
 
 mb:SetScript("OnClick", function(self, boton)
     if boton == "RightButton" then
-        Enviar("")   -- clic derecho: convocar al Maestro
+        Alternar()             -- clic derecho: ventana de atributos
+    elseif PA.AlternarPanel then
+        PA.AlternarPanel()     -- clic: panel del servidor
     else
         Alternar()
     end
 end)
+PA.AlternarAtributos = Alternar
 
 mb:SetScript("OnEnter", function(self)
     GameTooltip:SetOwner(self, "ANCHOR_LEFT")
-    GameTooltip:AddLine("Puntos de Atributo")
+    GameTooltip:AddLine("Servidor de Luis")
     if datos then
-        GameTooltip:AddLine("Puntos libres: |cff33ff33" .. datos.libres .. "|r de " .. datos.total, 1, 1, 1)
+        GameTooltip:AddLine("Puntos de atributo libres: |cff33ff33" .. datos.libres .. "|r de " .. datos.total, 1, 1, 1)
     end
-    GameTooltip:AddLine("Clic: abrir el menu", 0.8, 0.8, 0.8)
-    GameTooltip:AddLine("Clic derecho: convocar al Maestro", 0.8, 0.8, 0.8)
+    if PA.cartasPendientes and PA.cartasPendientes > 0 then
+        GameTooltip:AddLine("Cartas por elegir: |cffffd100" .. PA.cartasPendientes .. "|r", 1, 1, 1)
+    end
+    GameTooltip:AddLine("Clic: panel (atributos, cartas, montura, buzon, subasta, guia)", 0.8, 0.8, 0.8)
+    GameTooltip:AddLine("Clic derecho: puntos de atributo", 0.8, 0.8, 0.8)
     GameTooltip:AddLine("Arrastrar: mover el boton", 0.8, 0.8, 0.8)
     GameTooltip:Show()
 end)
@@ -260,13 +263,6 @@ end
 -- ------------------------------------------------------------
 -- Eventos
 -- ------------------------------------------------------------
-ChatFrame_AddMessageEventFilter("CHAT_MSG_SYSTEM", function(self, evento, msg, ...)
-    if type(msg) == "string" and string.sub(msg, 1, 6) == "ATRIB#" then
-        return true   -- ocultar la linea de datos del chat
-    end
-    return false
-end)
-
 local eventos = CreateFrame("Frame")
 eventos:RegisterEvent("ADDON_LOADED")
 eventos:RegisterEvent("PLAYER_ENTERING_WORLD")

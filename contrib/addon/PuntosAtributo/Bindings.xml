@@ -1,0 +1,14 @@
+<Bindings>
+    <Binding name="PUNTOSATRIBUTO_MONTAR" header="PUNTOSATRIBUTO">
+        PuntosAtributo_Montar()
+    </Binding>
+    <Binding name="PUNTOSATRIBUTO_PANEL">
+        PuntosAtributo_Panel()
+    </Binding>
+    <Binding name="PUNTOSATRIBUTO_CARTAS">
+        PuntosAtributo_Cartas()
+    </Binding>
+    <Binding name="PUNTOSATRIBUTO_GUIA">
+        if GuiaNiveles_Alternar then GuiaNiveles_Alternar() end
+    </Binding>
+</Bindings>

@@ -197,6 +197,8 @@ void Creature::AddToWorld()
         if (((GetCreatureTemplate()->rank == CREATURE_ELITE_RARE || GetCreatureTemplate()->rank == CREATURE_ELITE_RAREELITE) && GetZoneId() == 6757) || // Timeless Isle (or only rare elite?...)
             (!GetMap()->Instanceable() && sLootMgr->GetPersonalLoot(GetEntry())))   // World Bosses
             m_hasNormalLootMode = false;
+
+        sScriptMgr->OnCreatureSpawn(this);
     }
 }
 
@@ -1668,6 +1670,8 @@ void Creature::Respawn(bool force)
 
         //Re-initialize reactstate that could be altered by movementgenerators
         InitializeReactState();
+
+        sScriptMgr->OnCreatureSpawn(this);
     }
 
     UpdateObjectVisibility();

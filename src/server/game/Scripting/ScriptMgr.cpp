@@ -1159,6 +1159,16 @@ void ScriptMgr::OnShutdown()
     FOREACH_SCRIPT(WorldScript)->OnShutdown();
 }
 
+void ScriptMgr::OnCreatureSpawn(Creature* creature)
+{
+    FOREACH_SCRIPT(WorldScript)->OnCreatureSpawn(creature);
+}
+
+void ScriptMgr::OnCreatureLootGenerated(Player* looter, Creature* creature)
+{
+    FOREACH_SCRIPT(WorldScript)->OnCreatureLootGenerated(looter, creature);
+}
+
 bool ScriptMgr::OnCriteriaCheck(uint32 scriptId, Player* source, Unit* target)
 {
     ASSERT(source);

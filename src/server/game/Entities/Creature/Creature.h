@@ -445,6 +445,12 @@ class Creature : public Unit, public GridObject<Creature>, public MapObject
     public:
 
         explicit Creature(bool isWorldObject = false);
+
+        // [Personalizado] Monstruos dorados
+        bool m_esDorado = false;
+        float m_doradoEscala = 1.0f;
+        float m_doradoVidaPct = 0.0f;
+        float m_doradoDanoPct = 0.0f;
         virtual ~Creature();
 
         void AddToWorld() override;

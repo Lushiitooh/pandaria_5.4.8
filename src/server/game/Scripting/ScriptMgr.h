@@ -274,6 +274,12 @@ class WorldScript : public ScriptObject
         // Called when the world is actually shut down.
         virtual void OnShutdown() { }
 
+        // [Personalizado] Se llama cuando una criatura entra al mundo o reaparece.
+        virtual void OnCreatureSpawn(Creature* /*creature*/) { }
+
+        // [Personalizado] Se llama justo despues de generar el botin de una criatura muerta.
+        virtual void OnCreatureLootGenerated(Player* /*looter*/, Creature* /*creature*/) { }
+
         // Called when confing of world reloading
         virtual void OnAfterConfigLoad(bool reload = false) { }
 
@@ -1011,6 +1017,8 @@ class ScriptMgr
         void OnWorldUpdate(uint32 diff);
         void OnStartup();
         void OnShutdown();
+        void OnCreatureSpawn(Creature* creature);
+        void OnCreatureLootGenerated(Player* looter, Creature* creature);
 
     public: /* FormulaScript */
 

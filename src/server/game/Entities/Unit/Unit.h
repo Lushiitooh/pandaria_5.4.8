@@ -2670,6 +2670,12 @@ public:
     uint32 SpellAbsorbBonusDone(Unit* victim, SpellInfo const* spellProto, uint32 effIndex, uint32 absorbAmount, uint32 stack = 1) const;
 
     uint32 MeleeDamageBonusDone(Unit* pVictim, uint32 damage, WeaponAttackType attType, SpellInfo const* spellProto = NULL);
+
+    // [Personalizado] Bonos del sistema de cartas (porcentaje, 0 = sin bono).
+    float m_cartaDanoPct[MAX_SPELL_SCHOOL] = { };
+    float m_cartaSanacionPct = 0.0f;
+    float GetCartaDanoMod(uint32 schoolMask) const;
+    float GetCartaSanacionMod() const;
     uint32 MeleeDamageBonusTaken(Unit* attacker, uint32 pdamage, WeaponAttackType attType, SpellInfo const* spellProto = NULL);
 
 

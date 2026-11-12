@@ -2146,6 +2146,10 @@ void AddSC_battle_pay_items();
 void AddSC_solocraft_system();
 void AddSC_sistema_atributos();
 void AddSC_extras_servidor();
+void AddSC_sistema_cartas();
+void AddSC_monstruos_dorados();
+void AddSC_comodidades();
+void AddSC_mazmorras_solo();
 
 void AddCustomScripts()
 {
@@ -2157,6 +2161,10 @@ AddSC_battle_pay_items();
 AddSC_solocraft_system();
 AddSC_sistema_atributos();
 AddSC_extras_servidor();
+AddSC_sistema_cartas();
+AddSC_monstruos_dorados();
+AddSC_comodidades();
+AddSC_mazmorras_solo();
 
 #endif
     AddSC_Anticheat();

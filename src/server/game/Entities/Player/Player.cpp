@@ -6266,7 +6266,7 @@ float Player::GetRatingMultiplier(CombatRating cr) const
 
 float Player::GetRatingBonusValue(CombatRating cr) const
 {
-    return float(GetUInt32Value(PLAYER_FIELD_COMBAT_RATINGS + cr)) * GetRatingMultiplier(cr);
+    return float(GetUInt32Value(PLAYER_FIELD_COMBAT_RATINGS + cr)) * GetRatingMultiplier(cr) + m_cartaRatingPct[cr];
 }
 
 float Player::GetExpertiseDodgeOrParryReduction(WeaponAttackType attType) const

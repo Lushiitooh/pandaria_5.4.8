@@ -2580,6 +2580,8 @@ public:
     float OCTRegenMPPerSpirit();
     float GetRatingMultiplier(CombatRating cr) const;
     float GetRatingBonusValue(CombatRating cr) const;
+    // [Personalizado] Bono plano (en % o puntos) del sistema de cartas, sumado al valor del indice.
+    float m_cartaRatingPct[CR_MAX_COMBAT_RATING] = { };
 
     /// Returns base spellpower bonus from spellpower stat on items, without spellpower from intellect stat
     uint32 GetBaseSpellPowerBonus() const

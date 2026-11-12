@@ -1,8 +1,12 @@
 ## Interface: 50400
-## Title: Puntos de Atributo
-## Notes: Boton en el minimapa para repartir tus puntos de atributo (servidor de Luis).
+## Title: Servidor de Luis (Atributos, Cartas, Montar)
+## Notes: Boton en el minimapa: puntos de atributo, cartas de nivel, montura, buzon, subasta y guia.
 ## Author: Claude
-## Version: 1.0
+## Version: 2.0
 ## SavedVariablesPerCharacter: PuntosAtributoDB
 
+Nucleo.lua
 PuntosAtributo.lua
+Cartas.lua
+Montar.lua
+Panel.lua
