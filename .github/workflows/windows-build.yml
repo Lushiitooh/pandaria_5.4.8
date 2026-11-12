@@ -22,10 +22,27 @@ jobs:
       - name: Descargar codigo
         uses: actions/checkout@v4
 
-      - name: Instalar Boost 1.74 (msvc-14.2)
+      - name: Cache de Boost 1.74
+        id: cacheboost
+        uses: actions/cache@v4
+        with:
+          path: C:\local\boost_1_74_0
+          key: boost-1.74.0-msvc-14.2-x64
+
+      - name: Instalar Boost 1.74 (msvc-14.2, 64 bits)
+        if: steps.cacheboost.outputs.cache-hit != 'true'
         shell: pwsh
         run: |
-          choco install boost-msvc-14.2 --version 1.74.0 -y --no-progress
+          $url = "https://downloads.sourceforge.net/project/boost/boost-binaries/1.74.0/boost_1_74_0-msvc-14.2-64.exe"
+          $ok = $false
+          for ($i = 1; $i -le 4 -and -not $ok; $i++) {
+            curl.exe -L --retry 3 -A "Wget/1.21" -o boost.exe $url
+            $tam = (Get-Item boost.exe).Length
+            Write-Host "Intento $i : $tam bytes"
+            if ($tam -gt 100MB) { $ok = $true } else { Start-Sleep -Seconds 20 }
+          }
+          if (-not $ok) { throw "No se pudo descargar Boost" }
+          Start-Process -FilePath .\boost.exe -ArgumentList '/VERYSILENT','/SP-','/SUPPRESSMSGBOXES','/NORESTART','/DIR=C:\local\boost_1_74_0' -Wait
           if (!(Test-Path C:\local\boost_1_74_0\lib64-msvc-14.2)) { throw "Boost no quedo instalado" }
           Get-ChildItem C:\local\boost_1_74_0\lib64-msvc-14.2\cmake | Select-Object -First 5 Name
 
