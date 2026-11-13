@@ -2151,6 +2151,7 @@ void AddSC_monstruos_dorados();
 void AddSC_comodidades();
 void AddSC_mazmorras_solo();
 void AddSC_botin_mazmorras();
+void AddSC_resaltar_misiones();
 
 void AddCustomScripts()
 {
@@ -2167,6 +2168,7 @@ AddSC_monstruos_dorados();
 AddSC_comodidades();
 AddSC_mazmorras_solo();
 AddSC_botin_mazmorras();
+AddSC_resaltar_misiones();
 
 #endif
     AddSC_Anticheat();
