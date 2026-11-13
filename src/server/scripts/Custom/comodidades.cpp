@@ -3,6 +3,7 @@
  *
  *   .buzon     aparece un buzon a tu lado durante 2 minutos
  *   .subasta   aparece un subastador a tu lado durante 2 minutos
+ *   .salircombate  te saca del combate si quedaste trabado (10 s sin pelear)
  *
  * Los usa el panel del addon PuntosAtributo (botones "Buzon" y "Subasta").
  *
@@ -19,6 +20,8 @@
 #include "GameObject.h"
 #include "TemporarySummon.h"
 #include "Chat.h"
+#include "InstanceScript.h"
+#include "Pet.h"
 #include <mutex>
 #include <unordered_map>
 #include <ctime>
@@ -100,8 +103,36 @@ public:
         {
             { "buzon",   SEC_PLAYER, false, &HandleBuzon,   "Hace aparecer un buz\303\263n a tu lado." },
             { "subasta", SEC_PLAYER, false, &HandleSubasta, "Hace aparecer un subastador a tu lado." },
+            { "salircombate", SEC_PLAYER, false, &HandleSalirCombate, "Te saca del combate si quedaste trabado (10 segundos sin pelear)." },
         };
         return comandos;
+    }
+
+    static bool HandleSalirCombate(ChatHandler* handler, char const* /*args*/)
+    {
+        Player* player = handler->GetSession() ? handler->GetSession()->GetPlayer() : nullptr;
+        if (!player)
+            return true;
+        if (!player->IsInCombat())
+        {
+            handler->SendSysMessage("|cff00ccff[Combate]|r No est\303\241s en combate.");
+            return true;
+        }
+        if (InstanceScript* instance = player->GetInstanceScript())
+            if (instance->IsEncounterInProgress())
+            {
+                handler->SendSysMessage("|cffff0000Hay una pelea contra un jefe en curso.|r");
+                return true;
+            }
+        // El temporizador vuelve a 15 s con cada golpe o accion de combate
+        if (player->GetPvECombatTimer() > 5000 || player->GetVictim())
+        {
+            handler->SendSysMessage("|cffff0000Est\303\241s peleando. Deja de atacar y espera 10 segundos sin recibir da\303\261o.|r");
+            return true;
+        }
+        player->ForceLeaveCombat();
+        handler->SendSysMessage("|cff00ccff[Combate]|r Saliste del combate.");
+        return true;
     }
 
     static bool HandleBuzon(ChatHandler* handler, char const* /*args*/)

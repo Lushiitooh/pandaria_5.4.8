@@ -1955,6 +1955,10 @@ public:
     uint32 GetPvPCombatTimer() const { return m_combatTimerPvP; }
     uint32 GetPvECombatTimer() const { return m_combatTimerPvE; }
     void ResetPvECombatTimer() { m_combatTimerPvE = 0; }
+    // Enemigo que mantiene el combate sin pelear de verdad (invisible, lejos o atacando a otro)
+    bool IsGhostCombatant(Creature const* creature) const;
+    // Sale del combate a la fuerza (borra amenazas). Lo usa .salircombate
+    void ForceLeaveCombat();
 
     bool HasAuraTypeWithFamilyFlags(AuraType auraType, uint32 familyName, uint32 familyFlags) const;
     bool virtual HasSpell(uint32 /*spellID*/) const

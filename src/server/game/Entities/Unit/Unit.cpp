@@ -458,7 +458,7 @@ void Unit::Update(uint32 p_time)
                         Unit* target = ref->GetSource()->GetOwner();
                         ref = ref->next();
                         if (Creature* creature = target->ToCreature())
-                            if (!creature->CanCreatureAttack(this, false))
+                            if (!creature->CanCreatureAttack(this, false) || IsGhostCombatant(creature))
                                 m_HostileRefManager.deleteReference(target);
                     } while (ref);
                     if (m_HostileRefManager.isEmpty())
@@ -11802,6 +11802,49 @@ void Unit::SetInCombatState(bool PvP, Unit* enemy)
 
     if (GetCurrentSpell(CURRENT_GENERIC_SPELL) && !GetCurrentSpell(CURRENT_GENERIC_SPELL)->GetSpellInfo()->CanBeUsedInCombat())
         InterruptSpell(CURRENT_GENERIC_SPELL, false, false);
+}
+
+// Servidor de Luis: un enemigo "fantasma" deja al jugador trabado en combate.
+// Solo se usa cuando pasaron 15 s sin ninguna accion de combate (ni golpes ni amenaza).
+bool Unit::IsGhostCombatant(Creature const* creature) const
+{
+    if (!creature->IsAlive() || !creature->IsInWorld() || !creature->IsInMap(this))
+        return true;
+
+    // Invisible o en otra fase para nosotros
+    if (!InSamePhase(creature) || !CanSeeOrDetect(creature, false, false))
+        return true;
+
+    // Muy lejos
+    if (!IsWithinDistInMap(creature, 40.0f))
+        return true;
+
+    // No nos esta atacando a nosotros (ni a nuestra mascota)
+    Unit* victim = creature->GetVictim();
+    if (!victim)
+        return true;
+    if (victim != this && victim->GetCharmerOrOwnerOrSelf() != this && victim != GetCharmerOrOwnerOrSelf())
+        return true;
+
+    // Atascado: nos tiene de objetivo pero lleva 15 s sin alcanzarnos y no puede atacarnos desde ahi
+    if (!creature->IsWithinMeleeRange(victim) && !creature->isMoving() && !creature->HasUnitState(UNIT_STATE_CASTING))
+        return true;
+
+    return false;
+}
+
+void Unit::ForceLeaveCombat()
+{
+    AttackStop();
+    getHostileRefManager().deleteReferences();
+    ClearInCombat();
+    if (Player* player = ToPlayer())
+        if (Pet* pet = player->GetPet())
+        {
+            pet->AttackStop();
+            pet->getHostileRefManager().deleteReferences();
+            pet->ClearInCombat();
+        }
 }
 
 void Unit::ClearInCombat()

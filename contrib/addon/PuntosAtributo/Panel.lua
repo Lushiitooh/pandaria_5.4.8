@@ -2,7 +2,7 @@
 
 local _, PA = ...
 
-local p = PA.CrearVentana("PuntosAtributoPanel", 360, 470, "Servidor de Luis")
+local p = PA.CrearVentana("PuntosAtributoPanel", 360, 540, "Servidor de Luis")
 
 local sub = p:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
 sub:SetPoint("TOP", 0, -44)
@@ -21,6 +21,7 @@ local BOTONES = {
     { "Botón Montar en barra", "Interface\\Icons\\Ability_Mount_RidingHorse",        function() PA.PonerMontarEnBarra(false) end },
     { "Ordenar bolsas",       "Interface\\Icons\\INV_Misc_Bag_10",                     function() PA.OrdenarAhora() end },
     { "Orden automático sí/no", "Interface\\Icons\\INV_Misc_Bag_08",                   function() PA.AlternarAutoOrden() end },
+    { "Salir de combate",     "Interface\\Icons\\Ability_Rogue_Feint",                  function() PA.Orden("salircombate") end },
 }
 
 for i, b in ipairs(BOTONES) do
@@ -45,7 +46,7 @@ end
 local nota = p:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
 nota:SetPoint("BOTTOM", 0, 26)
 nota:SetWidth(310)
-nota:SetText("Teclas: Menú > Asignación de teclas > Servidor de Luis.\n/montar  /cartas  /puntos  /guia  /sort  /autoordenar")
+nota:SetText("Teclas: Menú > Asignación de teclas > Servidor de Luis.\n/montar  /cartas  /puntos  /guia  /sort  /autoordenar  /salircombate")
 
 function PA.AlternarPanel()
     if p:IsShown() then p:Hide() else p:Show() end
@@ -54,3 +55,6 @@ PuntosAtributo_Panel = PA.AlternarPanel
 
 SLASH_PAPANEL1 = "/servidor"
 SlashCmdList["PAPANEL"] = PA.AlternarPanel
+
+SLASH_PASALIRCOMBATE1 = "/salircombate"
+SlashCmdList["PASALIRCOMBATE"] = function() PA.Orden("salircombate") end
