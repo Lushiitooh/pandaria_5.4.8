@@ -2150,6 +2150,7 @@ void AddSC_sistema_cartas();
 void AddSC_monstruos_dorados();
 void AddSC_comodidades();
 void AddSC_mazmorras_solo();
+void AddSC_botin_mazmorras();
 
 void AddCustomScripts()
 {
@@ -2165,6 +2166,7 @@ AddSC_sistema_cartas();
 AddSC_monstruos_dorados();
 AddSC_comodidades();
 AddSC_mazmorras_solo();
+AddSC_botin_mazmorras();
 
 #endif
     AddSC_Anticheat();
