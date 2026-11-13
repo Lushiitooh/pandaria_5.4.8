@@ -9,4 +9,5 @@ Nucleo.lua
 PuntosAtributo.lua
 Cartas.lua
 Montar.lua
+Ordenar.lua
 Panel.lua

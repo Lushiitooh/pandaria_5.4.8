@@ -2,7 +2,7 @@
 
 local _, PA = ...
 
-local p = PA.CrearVentana("PuntosAtributoPanel", 360, 400, "Servidor de Luis")
+local p = PA.CrearVentana("PuntosAtributoPanel", 360, 470, "Servidor de Luis")
 
 local sub = p:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
 sub:SetPoint("TOP", 0, -44)
@@ -19,6 +19,8 @@ local BOTONES = {
         if GuiaNiveles_Alternar then GuiaNiveles_Alternar() else PA.Aviso("El addon GuiaNiveles no está activado.") end
     end },
     { "Botón Montar en barra", "Interface\\Icons\\Ability_Mount_RidingHorse",        function() PA.PonerMontarEnBarra(false) end },
+    { "Ordenar bolsas",       "Interface\\Icons\\INV_Misc_Bag_10",                     function() PA.OrdenarAhora() end },
+    { "Orden automático sí/no", "Interface\\Icons\\INV_Misc_Bag_08",                   function() PA.AlternarAutoOrden() end },
 }
 
 for i, b in ipairs(BOTONES) do
@@ -43,7 +45,7 @@ end
 local nota = p:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
 nota:SetPoint("BOTTOM", 0, 26)
 nota:SetWidth(310)
-nota:SetText("Teclas: Menú > Asignación de teclas > Servidor de Luis.\n/montar  /cartas  /puntos  /guia")
+nota:SetText("Teclas: Menú > Asignación de teclas > Servidor de Luis.\n/montar  /cartas  /puntos  /guia  /sort  /autoordenar")
 
 function PA.AlternarPanel()
     if p:IsShown() then p:Hide() else p:Show() end
