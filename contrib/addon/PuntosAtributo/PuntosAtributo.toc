@@ -10,4 +10,5 @@ PuntosAtributo.lua
 Cartas.lua
 Montar.lua
 Ordenar.lua
+Mapa.lua
 Panel.lua
