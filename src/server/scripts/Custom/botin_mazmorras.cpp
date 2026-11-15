@@ -16,6 +16,7 @@
  *   BotinMazmorras.ExtraJefe   = 2     (piezas extra por jefe)
  *   BotinMazmorras.ProbNormal  = 10    (% de pieza extra en enemigos normales)
  *   BotinMazmorras.Margen      = 6     (niveles de objeto bajo el maximo que aun se aceptan)
+ *   BotinMazmorras.TodoParaMiSolo = 1  (grupo de 1 persona: botin libre, sin tiradas)
  */
 
 #include "ScriptMgr.h"
@@ -28,6 +29,8 @@
 #include "ObjectMgr.h"
 #include "Item.h"
 #include "ItemEnchantmentMgr.h"
+#include "Group.h"
+#include "Chat.h"
 #include <algorithm>
 #include <unordered_set>
 #include <vector>
@@ -40,6 +43,7 @@ namespace BotinMazmorras
     static uint32 sExtraJefe = 2;
     static float sProbNormal = 10.0f;
     static uint32 sMargen    = 6;
+    static bool  sBotinSolo  = true;
 
     // Piezas moradas por tipo de hueco, ordenadas de mayor a menor nivel de objeto
     static std::vector<ItemTemplate const*> sPorTipo[MAX_TIPO + 1];
@@ -72,7 +76,15 @@ namespace BotinMazmorras
             || t.InventoryType == INVTYPE_BAG || t.InventoryType == INVTYPE_AMMO || t.InventoryType == INVTYPE_QUIVER
             || t.InventoryType > MAX_TIPO)
             return false;
-        if (t.RequiredLevel > NIVEL_MAX || t.ItemLevel == 0)
+        // Nivel requerido 0 = ropa de apariencia (sin estadisticas)
+        if (t.RequiredLevel < 1 || t.RequiredLevel > NIVEL_MAX || t.ItemLevel == 0)
+            return false;
+        // Debe tener estadisticas de verdad (las armas antiguas pueden tener solo dano)
+        bool conStats = false;
+        for (uint32 i = 0; i < MAX_ITEM_PROTO_STATS; ++i)
+            if (t.ItemStat[i].ItemStatType && (t.ItemStat[i].ItemStatValue > 0 || t.ItemStat[i].ItemStatAllocation > 0))
+                conStats = true;
+        if (!conStats && t.Class != ITEM_CLASS_WEAPON)
             return false;
         if (t.Bonding != BIND_ON_ACQUIRE && t.Bonding != BIND_ON_EQUIP)
             return false;
@@ -94,6 +106,7 @@ namespace BotinMazmorras
         sExtraJefe  = sConfigMgr->GetIntDefault("BotinMazmorras.ExtraJefe", 2);
         sProbNormal = sConfigMgr->GetFloatDefault("BotinMazmorras.ProbNormal", 10.0f);
         sMargen     = sConfigMgr->GetIntDefault("BotinMazmorras.Margen", 6);
+        sBotinSolo  = sConfigMgr->GetBoolDefault("BotinMazmorras.TodoParaMiSolo", true);
         if (sExtraJefe > 6)
             sExtraJefe = 6;
     }
@@ -243,6 +256,29 @@ using namespace BotinMazmorras;
 
 class botin_mazmorras_worldscript : public WorldScript
 {
+    // Grupo de una sola persona (buscador en solitario): botin libre, sin tiradas
+    // de necesidad o codicia; todo es tuyo. Si entra alguien mas vuelve a necesidad/codicia.
+    static void BotinSolo(Player* looter)
+    {
+        if (!looter || !sBotinSolo)
+            return;
+        Group* g = looter->GetGroup();
+        if (!g)
+            return;
+        bool solo = g->GetMembersCount() == 1;
+        if (solo && g->GetLootMethod() != FREE_FOR_ALL)
+        {
+            g->SetLootMethod(FREE_FOR_ALL);
+            g->SendUpdate();
+            ChatHandler(looter->GetSession()).SendSysMessage("|cff00ccff[Bot\303\255n]|r Est\303\241s solo en el grupo: todo el bot\303\255n es tuyo, sin tiradas.");
+        }
+        else if (!solo && g->GetLootMethod() == FREE_FOR_ALL && g->isLFGGroup())
+        {
+            g->SetLootMethod(NEED_BEFORE_GREED);
+            g->SendUpdate();
+        }
+    }
+
 public:
     botin_mazmorras_worldscript() : WorldScript("botin_mazmorras_worldscript") { }
 
@@ -258,6 +294,8 @@ public:
 
     void OnCreatureLootGenerated(Player* looter, Creature* c) override
     {
+        BotinSolo(looter);
+
         if (!sActivo || !looter || !c || !c->GetMap() || !c->GetMap()->IsDungeon())
             return;
 
