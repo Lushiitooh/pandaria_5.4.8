@@ -2,7 +2,7 @@
 
 local _, PA = ...
 
-local p = PA.CrearVentana("PuntosAtributoPanel", 360, 540, "Servidor de Luis")
+local p = PA.CrearVentana("PuntosAtributoPanel", 360, 600, "Servidor de Luis")
 
 local sub = p:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
 sub:SetPoint("TOP", 0, -44)
