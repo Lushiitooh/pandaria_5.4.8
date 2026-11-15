@@ -780,6 +780,69 @@ namespace Cartas
                     Descripcion(c->efecto, c->param, c->valor * par.second).c_str()));
     }
 
+    // Muestra cuanto suman de verdad las cartas ahora mismo (.cartas efecto)
+    static void MostrarEfecto(Player* player)
+    {
+        Datos& d = Obtener(player);
+        Totales const& t = d.aplicado;
+        static char const* const STATS[] = { "Fuerza", "Agilidad", "Aguante", "Intelecto", "Esp\303\255ritu" };
+        auto aporte = [](float total, float pct) { return pct > 0.0f ? total - total / (1.0f + pct / 100.0f) : 0.0f; };
+
+        Mensaje(player, "|cffffd100[Cartas]|r Efecto real de tus cartas ahora mismo:");
+        bool algo = false;
+        for (uint8 i = 0; i < MAX_STATS; ++i)
+            if (t.stat[i] > 0.0f)
+            {
+                float total = player->GetStat(Stats(i));
+                Mensaje(player, Formato("  %s: +%s%% = |cff00ff00+%u|r (total %u, se ve en la hoja de personaje, tecla C)",
+                    STATS[i], Num(t.stat[i]).c_str(), uint32(aporte(total, t.stat[i]) + 0.5f), uint32(total + 0.5f)));
+                algo = true;
+            }
+        if (t.vida > 0.0f)
+        {
+            float total = float(player->GetMaxHealth());
+            Mensaje(player, Formato("  Vida m\303\241xima: +%s%% = |cff00ff00+%u|r (total %u)",
+                Num(t.vida).c_str(), uint32(aporte(total, t.vida) + 0.5f), uint32(total)));
+            algo = true;
+        }
+        if (t.armadura > 0.0f)
+        {
+            float total = float(player->GetArmor());
+            Mensaje(player, Formato("  Armadura: +%s%% = |cff00ff00+%u|r (total %u)",
+                Num(t.armadura).c_str(), uint32(aporte(total, t.armadura) + 0.5f), uint32(total)));
+            algo = true;
+        }
+        static char const* const RG[] = { "Cr\303\255tico", "Celeridad", "Maestr\303\255a", "Esquivar", "Parada" };
+        for (uint8 g = 0; g < MAX_RG; ++g)
+            if (t.rating[g] > 0.0f)
+            {
+                Mensaje(player, Formato("  %s: |cff00ff00+%s%%|r (ya sumado en la hoja de personaje, secci\303\263n %s)",
+                    RG[g], Num(t.rating[g]).c_str(), RG[g]));
+                algo = true;
+            }
+        static char const* const ESC[] = { "f\303\255sico", "Sagrado", "Fuego", "Naturaleza", "Escarcha", "Sombras", "Arcano" };
+        std::string danos;
+        for (uint8 i = 0; i < MAX_SPELL_SCHOOL; ++i)
+            if (t.dano[i] > 0.0f)
+                danos += Formato("%s%s +%s%%", danos.empty() ? "" : ", ", ESC[i], Num(t.dano[i]).c_str());
+        if (!danos.empty())
+        {
+            Mensaje(player, "  Da\303\261o: |cff00ff00" + danos + "|r (se aplica al golpear; no aparece en la hoja de personaje)");
+            algo = true;
+        }
+        if (t.sanacion > 0.0f)
+        {
+            Mensaje(player, Formato("  Sanaci\303\263n: |cff00ff00+%s%%|r (se aplica al curar)", Num(t.sanacion).c_str()));
+            algo = true;
+        }
+        if (t.oro > 0.0f)
+            Mensaje(player, Formato("  Oro de enemigos: |cff00ff00+%s%%|r", Num(t.oro).c_str())), algo = true;
+        if (t.xp > 0.0f)
+            Mensaje(player, Formato("  Experiencia: |cff00ff00+%s%%|r", Num(t.xp).c_str())), algo = true;
+        if (!algo)
+            Mensaje(player, "  Todav\303\255a no tienes cartas activas.");
+    }
+
     // Para otros scripts (oro y experiencia)
     float BonoOro(Player* player)
     {
@@ -904,7 +967,12 @@ public:
         if (arg == "datos")
             EnviarDatosAddon(player);
         else if (arg == "lista")
+        {
             MostrarLista(player);
+            MostrarEfecto(player);
+        }
+        else if (arg == "efecto")
+            MostrarEfecto(player);
         else if (arg == "listaaddon")
             EnviarListaAddon(player);
         else if (arg == "rehacer")
