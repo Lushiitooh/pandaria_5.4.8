@@ -14,7 +14,8 @@
  *   Atributos.Enable            = 1
  *   Atributos.ValorPorPunto     = 1.0   (multiplicador general de stats primarios)
  *   Atributos.Armadura.Mult     = 10.0  (armadura por punto = valor * esto)
- *   Atributos.Indice.Mult       = 4.0   (indice de celeridad/critico/maestria por punto)
+ *   Atributos.Indice.PctPorPunto = 1.0  (% fijo de celeridad/critico/maestria por punto, a cualquier nivel)
+ *   Atributos.Escalado          = 0.05  (crecimiento de stats primarios y armadura en niveles altos)
  *   Atributos.PuntosExtraCada10 = 3
  */
 
@@ -99,6 +100,8 @@ namespace Atributos
         float multArmadura = 10.0f;
         float multIndice = 4.0f;
         uint32 extraCada10 = 3;
+        float pctIndice = 1.0f;     // % de celeridad/critico/maestria por punto (fijo, no baja con el nivel)
+        float escalado = 0.05f;     // crecimiento de stats primarios y armadura en niveles altos
 
         void Cargar()
         {
@@ -107,6 +110,8 @@ namespace Atributos
             multArmadura  = sConfigMgr->GetFloatDefault("Atributos.Armadura.Mult", 10.0f);
             multIndice    = sConfigMgr->GetFloatDefault("Atributos.Indice.Mult", 4.0f);
             extraCada10   = sConfigMgr->GetIntDefault("Atributos.PuntosExtraCada10", 3);
+            pctIndice     = sConfigMgr->GetFloatDefault("Atributos.Indice.PctPorPunto", 1.0f);
+            escalado      = sConfigMgr->GetFloatDefault("Atributos.Escalado", 0.05f);
         }
     };
 
@@ -142,18 +147,59 @@ namespace Atributos
         return float(v) * sCfg.valorPorPunto;
     }
 
-    static int32 ValorPorPunto(Stat s, uint32 nivel)
+    // Indice de combate necesario para 1 % a este nivel (tabla del juego)
+    static float IndicePor1Pct(Player* player, CombatRating cr)
     {
-        float base = ValorBase(nivel);
+        float m = player->GetRatingMultiplier(cr);
+        return m > 0.0f ? 1.0f / m : 1.0f;
+    }
+
+    static CombatRating IndiceDe(Stat s)
+    {
         switch (s)
         {
-            case ARMADURA:  return int32(base * sCfg.multArmadura + 0.5f);
-            case CELERIDAD:
-            case CRITICO:
-            case MAESTRIA:  return int32(base * sCfg.multIndice + 0.5f);
-            default:        return int32(base + 0.5f);
+            case CELERIDAD: return CR_HASTE_MELEE;
+            case CRITICO:   return CR_CRIT_MELEE;
+            default:        return CR_MASTERY;
         }
     }
+
+    // Valor de 1 punto de stat primario. Hasta el 85 sube de 1 a 9; despues crece
+    // al ritmo del equipo (la tabla de indices del juego) para no perder peso.
+    static float ValorPrimario(Player* player)
+    {
+        float base = ValorBase(player->GetLevel());
+        float porEquipo = IndicePor1Pct(player, CR_CRIT_MELEE) * sCfg.escalado * sCfg.valorPorPunto;
+        return porEquipo > base ? porEquipo : base;
+    }
+
+    // Total que dan N puntos de un stat
+    static int32 Cantidad(Player* player, Stat s, uint32 puntos)
+    {
+        if (!puntos)
+            return 0;
+        switch (s)
+        {
+            case ARMADURA:
+                return int32(float(puntos) * ValorPrimario(player) * sCfg.multArmadura + 0.5f);
+            case CELERIDAD:
+            case CRITICO:
+            case MAESTRIA:
+                // Porcentaje fijo por punto: el indice se recalcula en cada nivel
+                return int32(float(puntos) * sCfg.pctIndice * IndicePor1Pct(player, IndiceDe(s)) + 0.5f);
+            default:
+                return int32(float(puntos) * ValorPrimario(player) + 0.5f);
+        }
+    }
+
+    // Lo que da 1 punto (para mostrar)
+    static int32 ValorPorPunto(Player* player, Stat s)
+    {
+        int32 v = Cantidad(player, s, 1);
+        return v < 1 ? 1 : v;
+    }
+
+    static bool EsIndice(Stat s) { return s == CELERIDAD || s == CRITICO || s == MAESTRIA; }
 
     static uint32 PuntosGastados(Datos const& d)
     {
@@ -219,10 +265,9 @@ namespace Atributos
         if (!sCfg.activo)
             return;
 
-        uint32 nivel = player->GetLevel();
         for (uint8 i = 0; i < TOTAL_STATS; ++i)
         {
-            int32 cantidad = int32(d.gastado[i]) * ValorPorPunto(Stat(i), nivel);
+            int32 cantidad = Cantidad(player, Stat(i), d.gastado[i]);
             AplicarUno(player, Stat(i), cantidad, true);
             d.aplicado[i] = cantidad;
         }
@@ -341,7 +386,7 @@ namespace Atributos
         uint32 nivel = player->GetLevel();
         std::string linea = Formato("ATRIB#1#%u#%u#%u", nivel, PuntosLibres(player, d), PuntosTotales(nivel));
         for (uint8 i = 0; i < TOTAL_STATS; ++i)
-            linea += Formato("#%u#%d#%d", d.gastado[i], d.aplicado[i], ValorPorPunto(Stat(i), nivel));
+            linea += Formato("#%u#%d#%d", d.gastado[i], d.aplicado[i], ValorPorPunto(player, Stat(i)));
         Mensaje(player, linea);
     }
 
@@ -361,7 +406,9 @@ namespace Atributos
         for (uint8 i = 0; i < TOTAL_STATS; ++i)
         {
             AddGossipItemFor(player, GOSSIP_ICON_TRAINER,
-                Formato("%s: %u puntos (+%d)   [cada punto: +%d]", NOMBRES[i], d.gastado[i], d.aplicado[i], ValorPorPunto(Stat(i), nivel)),
+                EsIndice(Stat(i))
+                    ? Formato("%s: %u puntos (+%d = %.1f%%)   [cada punto: +%.1f%%]", NOMBRES[i], d.gastado[i], d.aplicado[i], d.gastado[i] * sCfg.pctIndice, sCfg.pctIndice)
+                    : Formato("%s: %u puntos (+%d)   [cada punto: +%d]", NOMBRES[i], d.gastado[i], d.aplicado[i], ValorPorPunto(player, Stat(i))),
                 SENDER_MENU, ACCION_ABRIR_STAT + i);
         }
 
@@ -377,7 +424,7 @@ namespace Atributos
     {
         Datos& d = Obtener(player);
         uint32 libres = PuntosLibres(player, d);
-        int32 valor = ValorPorPunto(s, player->GetLevel());
+        int32 valor = ValorPorPunto(player, s);
         ClearGossipMenuFor(player);
 
         AddGossipItemFor(player, GOSSIP_ICON_DOT,
@@ -406,7 +453,7 @@ namespace Atributos
         }
 
         float antes = ValorVisible(player, s);
-        int32 esperado = int32(cantidad) * ValorPorPunto(s, player->GetLevel());
+        int32 esperado = Cantidad(player, s, d.gastado[s] + cantidad) - Cantidad(player, s, d.gastado[s]);
 
         d.gastado[s] += cantidad;
         AplicarTodo(player, d);
