@@ -14,8 +14,9 @@
  *   Atributos.Enable            = 1
  *   Atributos.ValorPorPunto     = 1.0   (multiplicador general de stats primarios)
  *   Atributos.Armadura.Mult     = 10.0  (armadura por punto = valor * esto)
- *   Atributos.Indice.PctPorPunto = 1.0  (% fijo de celeridad/critico/maestria por punto, a cualquier nivel)
- *   Atributos.Escalado          = 0.05  (crecimiento de stats primarios y armadura en niveles altos)
+ *   Atributos.Primario.PorPunto  = 30   (fuerza, agilidad, aguante, intelecto y espiritu por punto, a cualquier nivel)
+ *   Atributos.Armadura.PorPunto  = 200  (armadura por punto, a cualquier nivel)
+ *   Atributos.Indice.PctPorPunto = 5.0  (% de celeridad/critico/maestria por punto, a cualquier nivel)
  *   Atributos.PuntosExtraCada10 = 3
  */
 
@@ -100,8 +101,10 @@ namespace Atributos
         float multArmadura = 10.0f;
         float multIndice = 4.0f;
         uint32 extraCada10 = 3;
-        float pctIndice = 1.0f;     // % de celeridad/critico/maestria por punto (fijo, no baja con el nivel)
-        float escalado = 0.05f;     // crecimiento de stats primarios y armadura en niveles altos
+        float pctIndice = 5.0f;     // % de celeridad/critico/maestria por punto (fijo a cualquier nivel)
+        float escalado = 0.05f;     // (ya no se usa)
+        float primarioFijo = 30.0f; // fuerza/agilidad/aguante/intelecto/espiritu por punto (fijo)
+        float armaduraFija = 200.0f;// armadura por punto (fijo)
 
         void Cargar()
         {
@@ -110,7 +113,9 @@ namespace Atributos
             multArmadura  = sConfigMgr->GetFloatDefault("Atributos.Armadura.Mult", 10.0f);
             multIndice    = sConfigMgr->GetFloatDefault("Atributos.Indice.Mult", 4.0f);
             extraCada10   = sConfigMgr->GetIntDefault("Atributos.PuntosExtraCada10", 3);
-            pctIndice     = sConfigMgr->GetFloatDefault("Atributos.Indice.PctPorPunto", 1.0f);
+            pctIndice     = sConfigMgr->GetFloatDefault("Atributos.Indice.PctPorPunto", 5.0f);
+            primarioFijo  = sConfigMgr->GetFloatDefault("Atributos.Primario.PorPunto", 30.0f);
+            armaduraFija  = sConfigMgr->GetFloatDefault("Atributos.Armadura.PorPunto", 200.0f);
             escalado      = sConfigMgr->GetFloatDefault("Atributos.Escalado", 0.05f);
         }
     };
@@ -139,14 +144,6 @@ namespace Atributos
         return total;
     }
 
-    // Cuanto vale 1 punto de un stat primario a este nivel (1 a 9 en nivel 90).
-    static float ValorBase(uint32 nivel)
-    {
-        uint32 v = (nivel + 9) / 10;
-        if (v < 1) v = 1;
-        return float(v) * sCfg.valorPorPunto;
-    }
-
     // Indice de combate necesario para 1 % a este nivel (tabla del juego)
     static float IndicePor1Pct(Player* player, CombatRating cr)
     {
@@ -164,13 +161,10 @@ namespace Atributos
         }
     }
 
-    // Valor de 1 punto de stat primario. Hasta el 85 sube de 1 a 9; despues crece
-    // al ritmo del equipo (la tabla de indices del juego) para no perder peso.
-    static float ValorPrimario(Player* player)
+    // Valor fijo de 1 punto de stat primario (igual a cualquier nivel)
+    static float ValorPrimario(Player* /*player*/)
     {
-        float base = ValorBase(player->GetLevel());
-        float porEquipo = IndicePor1Pct(player, CR_CRIT_MELEE) * sCfg.escalado * sCfg.valorPorPunto;
-        return porEquipo > base ? porEquipo : base;
+        return sCfg.primarioFijo;
     }
 
     // Total que dan N puntos de un stat
@@ -181,7 +175,7 @@ namespace Atributos
         switch (s)
         {
             case ARMADURA:
-                return int32(float(puntos) * ValorPrimario(player) * sCfg.multArmadura + 0.5f);
+                return int32(float(puntos) * sCfg.armaduraFija + 0.5f);
             case CELERIDAD:
             case CRITICO:
             case MAESTRIA:
@@ -628,8 +622,8 @@ public:
     {
         sCfg.Cargar();
         CrearTabla();
-        TC_LOG_INFO("server.loading", ">> Sistema de Atributos: %s (valor por punto x%.2f, armadura x%.1f, indices x%.1f)",
-            sCfg.activo ? "ACTIVO" : "desactivado", sCfg.valorPorPunto, sCfg.multArmadura, sCfg.multIndice);
+        TC_LOG_INFO("server.loading", ">> Sistema de Atributos: %s (por punto: +%.0f primarios, +%.0f armadura, +%.1f%% celeridad/critico/maestria)",
+            sCfg.activo ? "ACTIVO" : "desactivado", sCfg.primarioFijo, sCfg.armaduraFija, sCfg.pctIndice);
     }
 };
 
