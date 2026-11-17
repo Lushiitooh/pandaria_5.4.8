@@ -21,6 +21,7 @@ local BOTONES = {
     { "Botón Montar en barra", "Interface\\Icons\\Ability_Mount_RidingHorse",        function() PA.PonerMontarEnBarra(false) end },
     { "Ordenar bolsas",       "Interface\\Icons\\INV_Misc_Bag_10",                     function() PA.OrdenarAhora() end },
     { "Orden automático sí/no", "Interface\\Icons\\INV_Misc_Bag_08",                   function() PA.AlternarAutoOrden() end },
+    { "Maestro de profesiones", "Interface\\Icons\\Trade_BlackSmithing",            function() PA.Orden("profesiones") end },
     { "Efecto de mis cartas",  "Interface\\Icons\\INV_Inscription_Tarot_Volcanocard",   function() PA.Orden("cartas efecto") end },
     { "Salir de combate",     "Interface\\Icons\\Ability_Rogue_Feint",                  function() PA.Orden("salircombate") end },
 }

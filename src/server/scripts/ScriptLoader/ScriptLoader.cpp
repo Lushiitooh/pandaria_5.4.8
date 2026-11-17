@@ -2152,6 +2152,7 @@ void AddSC_comodidades();
 void AddSC_mazmorras_solo();
 void AddSC_botin_mazmorras();
 void AddSC_resaltar_misiones();
+void AddSC_profesiones();
 
 void AddCustomScripts()
 {
@@ -2169,6 +2170,7 @@ AddSC_comodidades();
 AddSC_mazmorras_solo();
 AddSC_botin_mazmorras();
 AddSC_resaltar_misiones();
+AddSC_profesiones();
 
 #endif
     AddSC_Anticheat();
