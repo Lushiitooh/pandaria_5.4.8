@@ -21,6 +21,7 @@ local BOTONES = {
     { "Botón Montar en barra", "Interface\\Icons\\Ability_Mount_RidingHorse",        function() PA.PonerMontarEnBarra(false) end },
     { "Ordenar bolsas",       "Interface\\Icons\\INV_Misc_Bag_10",                     function() PA.OrdenarAhora() end },
     { "Orden automático sí/no", "Interface\\Icons\\INV_Misc_Bag_08",                   function() PA.AlternarAutoOrden() end },
+    { "Bufos de banda (1 hora)", "Interface\\Icons\\Spell_Magic_GreaterBlessingofKings", function() PA.Orden("bufos") end },
     { "Maestro de profesiones", "Interface\\Icons\\Trade_BlackSmithing",            function() PA.Orden("profesiones") end },
     { "Efecto de mis cartas",  "Interface\\Icons\\INV_Inscription_Tarot_Volcanocard",   function() PA.Orden("cartas efecto") end },
     { "Salir de combate",     "Interface\\Icons\\Ability_Rogue_Feint",                  function() PA.Orden("salircombate") end },
@@ -48,7 +49,7 @@ end
 local nota = p:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
 nota:SetPoint("BOTTOM", 0, 26)
 nota:SetWidth(310)
-nota:SetText("Teclas: Menú > Asignación de teclas > Servidor de Luis.\n/montar  /cartas  /puntos  /guia  /sort  /autoordenar  /salircombate")
+nota:SetText("Teclas: Menú > Asignación de teclas > Servidor de Luis.\n/montar  /cartas  /puntos  /guia  /sort  /autoordenar  /salircombate  /bufos")
 
 function PA.AlternarPanel()
     if p:IsShown() then p:Hide() else p:Show() end
@@ -60,3 +61,6 @@ SlashCmdList["PAPANEL"] = PA.AlternarPanel
 
 SLASH_PASALIRCOMBATE1 = "/salircombate"
 SlashCmdList["PASALIRCOMBATE"] = function() PA.Orden("salircombate") end
+
+SLASH_PABUFOS1 = "/bufos"
+SlashCmdList["PABUFOS"] = function() PA.Orden("bufos") end

@@ -22,6 +22,7 @@
 #include "Chat.h"
 #include "InstanceScript.h"
 #include "Pet.h"
+#include "SpellAuras.h"
 #include <mutex>
 #include <unordered_map>
 #include <ctime>
@@ -104,8 +105,63 @@ public:
             { "buzon",   SEC_PLAYER, false, &HandleBuzon,   "Hace aparecer un buz\303\263n a tu lado." },
             { "subasta", SEC_PLAYER, false, &HandleSubasta, "Hace aparecer un subastador a tu lado." },
             { "salircombate", SEC_PLAYER, false, &HandleSalirCombate, "Te saca del combate si quedaste trabado (10 segundos sin pelear)." },
+            { "bufos", SEC_PLAYER, false, &HandleBufos, "Te da los 8 bufos de banda durante 1 hora." },
         };
         return comandos;
+    }
+
+    // Los 8 bufos de banda de Pandaria (uno de cada tipo; los del mismo tipo no se suman)
+    static bool HandleBufos(ChatHandler* handler, char const* /*args*/)
+    {
+        Player* player = handler->GetSession() ? handler->GetSession()->GetPlayer() : nullptr;
+        if (!player)
+            return true;
+        if (!player->IsAlive())
+        {
+            handler->SendSysMessage("|cffff0000[Bufos]|r Debes estar vivo.");
+            return true;
+        }
+        if (player->InArena() || player->InBattleground())
+        {
+            handler->SendSysMessage("|cffff0000[Bufos]|r No se pueden usar en campos de batalla ni arenas.");
+            return true;
+        }
+
+        static uint32 const BUFOS[] =
+        {
+            1126,     // Marca de lo Salvaje: +5% fuerza, agilidad e intelecto
+            21562,    // Palabra de poder: entereza: +10% aguante
+            57330,    // Cuerno de invierno: +10% poder de ataque
+            1459,     // Luminosidad Arcana: +10% poder con hechizos y +5% critico
+            128432,   // Aullido burlon: +10% celeridad cuerpo a cuerpo y a distancia
+            49868,    // Celeridad mental: +5% celeridad con hechizos
+            116781,   // Legado del Tigre Blanco: +5% critico
+            19740,    // Bendicion de poderio: maestria
+        };
+        int32 const UNA_HORA = HOUR * IN_MILLISECONDS;
+
+        auto aplicar = [&](Unit* u) -> uint32
+        {
+            uint32 n = 0;
+            for (uint32 id : BUFOS)
+            {
+                u->RemoveAurasDueToSpell(id);
+                if (Aura* a = u->AddAura(id, u))
+                {
+                    a->SetMaxDuration(UNA_HORA);
+                    a->SetDuration(UNA_HORA);
+                    ++n;
+                }
+            }
+            return n;
+        };
+
+        uint32 n = aplicar(player);
+        if (Pet* pet = player->GetPet())
+            aplicar(pet);
+
+        handler->PSendSysMessage("|cff00ccff[Bufos]|r %u bufos de banda aplicados por 1 hora: estad\303\255sticas, aguante, poder de ataque, poder con hechizos, celeridad (f\303\255sica y m\303\241gica), cr\303\255tico y maestr\303\255a.", n);
+        return true;
     }
 
     static bool HandleSalirCombate(ChatHandler* handler, char const* /*args*/)
